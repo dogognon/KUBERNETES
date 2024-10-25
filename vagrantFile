@@ -1,0 +1,54 @@
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # Définir le nombre de masters et de workers
+  num_masters = 1
+  num_workers = 3
+  node_config = [
+    { "name" => "Master", "count" => num_masters, "start_ip" => 10, "type" => "master", "memory" => 2048, "cpus" => 2 },
+    { "name" => "Worker", "count" => num_workers, "start_ip" => 20, "type" => "worker", "memory" => 1024, "cpus" => 1 }
+  ]
+
+  node_config.each do |node|
+    (1..node["count"]).each do |i|
+      node_name = "Kubernetes#{node["name"]}#{i}"
+      node_ip = "192.168.50.#{node["start_ip"] + i}"
+
+      # ne pas installer vbguest additionnal
+      if Vagrant.has_plugin?("vagrant-vbguest")
+        config.vbguest.auto_update = false
+      end
+
+      config.vm.define node_name do |n|
+        n.vm.box = "debian/bookworm64"
+        n.vm.hostname = node_name
+        n.vm.network "private_network", ip: node_ip
+
+        # Provisionnement des masters et workers
+        n.vm.provision "shell", inline: <<-SHELL
+          # Exécuter le script en fonction du rôle (master ou worker)
+          if [ "#{node["type"]}" == "master" ]; then
+            if [ #{i} -eq 1 ]; then
+              # le master
+              bash /vagrant/k8s.sh master init 192.168.50.11
+            else
+              # le secondaire
+              bash /vagrant/k8s.sh master join
+              
+            fi
+          else
+              bash /vagrant/k8s.sh worker
+          fi
+        SHELL
+        
+        # Configurations spécifiques par type de nœud
+        n.vm.provider "virtualbox" do |vb|
+          vb.memory = node["memory"]
+          vb.cpus = node["cpus"]
+          vb.name = node_name
+        end
+      end
+    end
+  end
+end

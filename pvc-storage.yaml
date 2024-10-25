@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: block-storage  # Nom du PVC pour le stockage en bloc
+  namespace: default  # Namespace dans lequel le PVC sera créé
+spec:
+  accessModes:
+    - ReadWriteOnce  # Mode d'accès : le volume peut être monté en lecture/écriture par un seul nœud
+  resources:
+    requests:
+      storage: 1Gi  # Taille demandée pour le volume en Go
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: file-storage  # Nom du PVC pour le stockage de fichiers
+  namespace: default  # Namespace dans lequel le PVC sera créé
+spec:
+  accessModes:
+    - ReadWriteMany  # Mode d'accès : le volume peut être monté en lecture/écriture par plusieurs nœuds
+  resources:
+    requests:
+      storage: 1Gi  # Taille demandée pour le volume en Go
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: object-storage  # Nom du PVC pour le stockage d'objets
+  namespace: default  # Namespace dans lequel le PVC sera créé
+spec:
+  accessModes:
+    - ReadWriteOnce  # Mode d'accès : le volume peut être monté en lecture/écriture par un seul nœud
+  resources:
+    requests:
+      storage: 1Gi  # Taille demandée pour le volume en Go
+
+
+# sudo kubectl apply -f pvc-storage.yaml
